@@ -1,56 +1,62 @@
-import 'package:flutter/Material.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:project/Dashboard/dashboard_bloc/dashboardk_bloc.dart';
+import 'package:project/Dashboard/drawerpages/attendance.dart';
+import 'package:project/Dashboard/drawerpages/report.dart';
+import 'package:project/Dashboard/homepage.dart';
+import 'package:project/profile_page/profilepage.dart';
 import '../mydash/dashhome.dart';
 import 'mydrawer.dart';
 import 'mydraweritems.dart';
 
 class MainPage extends StatefulWidget {
-  const MainPage({super.key});
+  const MainPage({Key? key}) : super(key: key);
 
   @override
   State<MainPage> createState() => _MainPageState();
 }
 
 class _MainPageState extends State<MainPage> {
-  //Declaring Variables
+  final DashboardkBloc dashBloc = DashboardkBloc();
+
   late double xoffset;
   late double yoffset;
   late double scaleFactor;
   bool isDragging = false;
-  late bool isDrawerOpen;
+  bool isDrawerOpen = false;
   DrawerItem item = DrawerItems.home;
 
-  //Init State
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     closeDrawer();
   }
 
-  //When Drawer Open Handler
-  void openDrawer() => setState(() {
-        xoffset = 230;
-        yoffset = 170;
-        scaleFactor = 0.6;
-        isDrawerOpen = true;
-      });
+  void openDrawer() {
+    setState(() {
+      xoffset = 230;
+      yoffset = 170;
+      scaleFactor = 0.6;
+      isDrawerOpen = true;
+    });
+  }
 
-  //When Drawer Closed Handler
-  void closeDrawer() => setState(() {
-        xoffset = 0;
-        yoffset = 0;
-        scaleFactor = 1;
-        isDrawerOpen = false;
-      });
+  void closeDrawer() {
+    setState(() {
+      xoffset = 0;
+      yoffset = 0;
+      scaleFactor = 1;
+      isDrawerOpen = false;
+    });
+  }
 
-  //HANDLING PAGE INTO TWO PARTS
   @override
   Widget build(BuildContext context) => Scaffold(
-        backgroundColor: Color(0x80E26142),
+        backgroundColor: const Color(0x80E26142),
         body: Stack(
           children: [
-            buildDrawer(), //BUILD CUSTOM DRAWER
-            buildPage(), //BUILD OTHER SIDE THAT IS DASHBOARD
+            buildDrawer(),
+            buildPage(),
           ],
         ),
       );
@@ -62,27 +68,37 @@ class _MainPageState extends State<MainPage> {
           child: Container(
             width: xoffset,
             child: MyDrawer(
-              onSelectedItems: (item) {
+              onSelectedItems: (selectedItem) {
+                setState(() {
+                  item = selectedItem;
+                  closeDrawer();
+                });
+
+                // Trigger events based on the selected item
                 switch (item) {
+                  case DrawerItems.home:
+                    dashBloc.add(NavigateToHomeEvent());
+                    break;
+
                   case DrawerItems.attendance:
-                    Navigator.pushNamed(context, '/attendance');
-                    return;
+                    dashBloc.add(NavigateToAttendanceEvent());
+                    break;
 
                   case DrawerItems.reports:
-                    Navigator.pushNamed(context, '/report');
-                    return;
+                    dashBloc.add(NavigateToReportsEvent());
+                    break;
 
                   case DrawerItems.profile:
-                    Navigator.pushNamed(context, '/profile');
-                    return;
+                    dashBloc.add(NavigateToProfileEvent());
+                    break;
+
                   case DrawerItems.logout:
-                   Navigator.pushNamed(context, '/logout');
+                    dashBloc.add(NavigateToLogoutEvent());
+                    break;
 
                   default:
-                    setState(() {
-                      this.item = item;
-                      closeDrawer();
-                    });
+                    dashBloc.add(NavigateToLogoutEvent());
+                    break;
                 }
               },
             ),
@@ -116,26 +132,49 @@ class _MainPageState extends State<MainPage> {
           isDragging = false;
         },
         child: AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            transform: Matrix4.translationValues(xoffset, yoffset, 0)
-              ..scale(scaleFactor),
-            child: AbsorbPointer(
-              absorbing: isDrawerOpen,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(isDrawerOpen ? 20 : 0),
-                child: Container(
-                  color: isDrawerOpen
-                      ? Colors.white12.withOpacity(0.23)
-                      : const Color(0xFFFDF7F5),
-                  child: getDrawerPage(),
-                ),
+          duration: const Duration(milliseconds: 300),
+          transform: Matrix4.translationValues(xoffset, yoffset, 0)
+            ..scale(scaleFactor),
+          child: AbsorbPointer(
+            absorbing: isDrawerOpen,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(isDrawerOpen ? 20 : 0),
+              child: Container(
+                color: isDrawerOpen
+                    ? Colors.white12.withOpacity(0.23)
+                    : const Color(0xFFFDF7F5),
+                child: getDrawerPage(),
               ),
-            )),
+            ),
+          ),
+        ),
       ),
     );
   }
 
   Widget getDrawerPage() {
-    return MyDashboard(openDrawer: openDrawer);
+    return BlocBuilder<DashboardkBloc, DashboardkState>(
+      bloc: dashBloc,
+      builder: (context, state) {
+        if (state is NavigateToProfileState) {
+          return ProfilePage();
+        }
+        else if (state is NavigateToAttendanceState) {
+          return attendance();
+        }
+        else if (state is NavigateToHomeState) {
+          return MyDashboard();
+        }
+        else if (state is NavigateToReportsState) {
+          return reports();
+        }
+        else if (state is NavigateToLogoutState) {
+          return HomePage();
+        }
+        else {
+          return MyDashboard();
+        }
+      },
+    );
   }
 }
