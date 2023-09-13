@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:open_street_map_search_and_pick/open_street_map_search_and_pick.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
 
 class EmployeeMap extends StatefulWidget {
   EmployeeMap({Key? key}) : super(key: key);
@@ -15,7 +15,7 @@ class EmployeeMap extends StatefulWidget {
 class _EmployeeMapState extends State<EmployeeMap> {
   double? getLat;
   double? getLong;
-
+  double? getRadius;
   double? currentLat;
   double? currentLong;
   bool locationError = false;
@@ -24,40 +24,49 @@ class _EmployeeMapState extends State<EmployeeMap> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
-
     checkLocationPermission();
     checkLocationPermissionAndFetchLocation();
-
+    loadCoordinatesFromSharedPreferences();
     display();
   }
 
+  Future<void> loadCoordinatesFromSharedPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    getLat = double.tryParse(prefs.getString('latitude') ?? '');
+    getLong = double.tryParse(prefs.getString('longitude') ?? '');
+    getRadius = double.tryParse(prefs.getString('radius') ?? '');
+    print(getLat.toString());
+    print(getLong.toString());
+    print(getRadius.toString());
+  }
+
+
+
   Future<void> checkLocationPermission() async {
     Geolocator.getServiceStatusStream().listen((status) {
-      if (status == ServiceStatus.enabled) {
-        setState(() {
-          locationError = false;
-        });
-      } else {
-        setState(() {
-          locationError = true;
-        });
-      }
+      setState(() {
+        locationError = status != ServiceStatus.enabled;
+      });
     });
   }
 
   void _startGeoFencingUpdate() {
     final double? geofenceLatitude = getLat;
     final double? geofenceLongitude = getLong;
-    const double geofenceRadius = 250.0;
-
+    final double? geofenceRadius = getRadius;
     double distance = Geolocator.distanceBetween(
         geofenceLatitude!, geofenceLongitude!, currentLat!, currentLong!);
 
-    if (distance <= geofenceRadius) {
+    print(getLat);
+    print(getLong);
+    print(getRadius);
+    if (distance <= geofenceRadius!) {
+      print("in radius");
       inRadius();
     } else if (distance >= geofenceRadius) {
+      print("out radius");
+
       outRadius();
     }
   }
@@ -116,7 +125,7 @@ class _EmployeeMapState extends State<EmployeeMap> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Oh No'),
-          content: const Text('Your Attendance did"nt MARKED'),
+          content: const Text('Your Attendance did not get MARKED'),
           actions: <Widget>[
             TextButton(
               onPressed: () {
@@ -134,26 +143,21 @@ class _EmployeeMapState extends State<EmployeeMap> {
     List<Placemark> placemarks = await placemarkFromCoordinates(lat, long);
     setState(() {
       address =
-          "${placemarks[0].street!}, ${placemarks[4].street!} , ${placemarks[0].country!}";
+      "${placemarks[0].street!}, ${placemarks[4].street!} , ${placemarks[0].country!}";
     });
-/*
-    for (int i = 0; i < placemarks.length; i++) {
-      print("INDEX $i ${placemarks[i]}");
-    }
-
- */
   }
 
+  @override
   void dispose() {
     super.dispose();
   }
 
+  @override
   Widget build(BuildContext context) {
     if (locationError) {
       return AlertDialog(
         title: const Text('Turn On Location'),
-        content:
-            const Text('Please turn on your location to use this feature.'),
+        content: const Text('Please turn on your location to use this feature.'),
         actions: <Widget>[
           TextButton(
             onPressed: () {
@@ -174,24 +178,23 @@ class _EmployeeMapState extends State<EmployeeMap> {
               const SizedBox(width: 8),
               GestureDetector(
                 onTap: _startGeoFencingUpdate,
-                child: const Icon(Icons.check, color: Colors.teal),
+                child: const Icon(Icons.add, color: Colors.white),
               ),
             ],
           ),
         ),
         body: (currentLat != null && currentLong != null)
             ? OpenStreetMapSearchAndPick(
-                center: LatLong(currentLat!, currentLong!),
-                onPicked: (pickedData) {
-                  getAddress(pickedData.latLong.latitude,
-                      pickedData.latLong.longitude);
-                },
-                locationPinIconColor: const Color(0xFFE26142),
-                locationPinText: "${address}",
-              )
-            :  const Center(
-                child: CircularProgressIndicator(),
-              ),
+          center: LatLong(currentLat!, currentLong!),
+          onPicked: (pickedData) {
+            getAddress(pickedData.latLong.latitude, pickedData.latLong.longitude);
+          },
+          locationPinIconColor: const Color(0xFFE26142),
+          locationPinText: "${address}",
+        )
+            : const Center(
+          child: CircularProgressIndicator(),
+        ),
       );
     }
   }
