@@ -12,7 +12,7 @@ class StorageDetails extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(defaultPadding),
       decoration: const BoxDecoration(
-        color: Colors.orangeAccent,
+        color: Color(0xFFE26142),
         borderRadius: BorderRadius.all(Radius.circular(10)),
       ),
       child: const Column(
@@ -23,6 +23,7 @@ class StorageDetails extends StatelessWidget {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w500,
+              color: Colors.white,
             ),
           ),
           SizedBox(height: defaultPadding),

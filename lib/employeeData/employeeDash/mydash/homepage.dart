@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../employeeMap/employeemap.dart';
+
 class DashHome extends StatefulWidget {
   const DashHome({Key? key}) : super(key: key);
   @override
@@ -13,12 +15,28 @@ class _HomePageState extends State<DashHome> {
   late bool locationError = true;
   double? lat;
   double? long;
+  String? corporateID;
+  String? username;
+  String? password;
 
   @override
   void initState() {
     super.initState();
     checkLocationPermission();
     checkLocationPermissionAndFetchLocation();
+    fetchUserData();
+  }
+
+  Future<void> fetchUserData() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      // Fetch data from prefs
+      corporateID = prefs.getString('corporateID');
+      username = prefs.getString('username');
+      password = prefs.getString('password');
+    } catch (e) {
+      print('Error initializing SharedPreferences: $e');
+    }
   }
 
   Future<void> checkLocationPermission() async {
@@ -55,7 +73,6 @@ class _HomePageState extends State<DashHome> {
     }
   }
 
-
   void onTapMaps() {
     if (locationError) {
       showDialog(
@@ -88,12 +105,13 @@ class _HomePageState extends State<DashHome> {
 
   @override
   Widget build(BuildContext context) {
-    String formattedDate = DateFormat('EEEE, d MMMM yyyy').format(DateTime.now());
+    String formattedDate =
+        DateFormat('EEEE, d MMMM yyyy').format(DateTime.now());
 
     //FIRST APPROACH
-    return  SingleChildScrollView(
-        child: Column(
-            children: [
+    return SingleChildScrollView(
+      child: Column(
+        children: [
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
             child: Column(
@@ -164,9 +182,9 @@ class _HomePageState extends State<DashHome> {
             ),
           ),
           const SizedBox(height: 20),
-          const Text(
-            "Welcome Asfand!",
-            style: TextStyle(
+          Text(
+            "Welcome $username",
+            style: const TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.w500,
                 color: Colors.black87),
@@ -271,7 +289,6 @@ class _HomePageState extends State<DashHome> {
             indent: 60,
             endIndent: 60,
           ),
-
           const SizedBox(
             height: 20,
           ),
@@ -298,274 +315,12 @@ class _HomePageState extends State<DashHome> {
               ],
             ),
           ),
-
           const SizedBox(
             height: 10,
           ),
-        ])
+        ],
+      ),
     );
-
-
-    //SECOND APPROACH ***************************
-    /*
-    double screenHeight = MediaQuery.of(context).size.height;
-    return Scaffold(
-      appBar:AppBar(
-        backgroundColor: Color(0xFFE26142),
-        elevation: 0,
-        title: Center(
-          child: Text("E-ID 0097"),
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(
-              Icons.settings,
-              color: Colors.white,
-            ),
-            onPressed: () {
-              // Add your settings icon functionality here
-            },
-          ),
-        ],
-      ),
-      body: Stack(
-        children: <Widget>[
-          Column(children: <Widget>[
-            Expanded(
-              flex: 3,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 20),
-                    GridView.count(
-                      shrinkWrap: true,
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 20,
-                      mainAxisSpacing: 20,
-                      children: [
-                        Container(
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                          ),
-                          child: ClipOval(
-                            child: Image.asset(
-                              "assets/icons/man.png",
-                              width: 120,
-                              height: 80,
-                            ),
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: onTapMaps,
-                          child: ItemDashboard(
-                            showShadow: false,
-                            title: 'Mark Attendance',
-                            customIcon: Image.asset(
-                              "assets/icons/locate.png",
-                              width: 120,
-                              height: 80,
-                            ),
-                            background: Color(0xFFE26142),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            Expanded(
-              flex: 5,
-              child: Container(
-                padding: const EdgeInsets.only(top: 50),
-                color: Colors.white,
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 20),
-                      const Text(
-                        "Welcome Asfand!",
-                        style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.black87),
-                      ),
-                      const SizedBox(height: 10), // Add some spacing
-                      // Current day and date
-                      Text(
-                        formattedDate,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey,
-                        ),
-                      ),
-                      Table(
-                        children: [
-                          TableRow(
-                            children: [
-                              ProfileInfoBigCard(
-                                firstText: "20",
-                                secondText: "Total Present",
-                                icon: Image.asset(
-                                  "assets/icons/Attend.png",
-                                  width: 35,
-                                ),
-                              ),
-                              ProfileInfoBigCard(
-                                firstText: "8",
-                                secondText: "Total Absent",
-                                icon: Image.asset(
-                                  "assets/icons/absence.png",
-                                  width: 35,
-                                ),
-                              ),
-                            ],
-                          ),
-                          TableRow(
-                            children: [
-                              ProfileInfoBigCard(
-                                firstText: "0 - 4 ",
-                                secondText: "Leaves/Holiday",
-                                icon: Image.asset(
-                                  "assets/icons/holiday.png",
-                                  width: 35,
-                                ),
-                              ),
-                              ProfileInfoBigCard(
-                                firstText: "7",
-                                secondText: "Working Days",
-                                icon: Image.asset(
-                                  "assets/icons/business.png",
-                                  width: 35,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 30, vertical: 20),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 20),
-                            GridView.count(
-                              shrinkWrap: true,
-                              crossAxisCount: 2,
-                              crossAxisSpacing: 20,
-                              mainAxisSpacing: 20,
-                              children: [
-                                GestureDetector(
-                                  onTap: onTapMaps,
-                                  child: ItemDashboard(
-                                    showShadow: false,
-                                    title: 'Leave Request',
-                                    customIcon: Image.asset(
-                                      "assets/icons/leave.png",
-                                      width: 120,
-                                      height: 80,
-                                    ),
-                                    background: Color(0xFFE26142),
-                                  ),
-                                ),
-                                GestureDetector(
-                                  onTap: onTapMaps,
-                                  child: ItemDashboard(
-                                    showShadow: false,
-                                    title: 'Reports',
-                                    customIcon: Image.asset(
-                                      "assets/icons/report.png",
-                                      width: 120,
-                                      height: 80,
-                                    ),
-                                    background: Color(0xFFE26142),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      const Divider(
-                        height: 1, // Height of the spacing line
-                        color: Colors.grey, // Make the line color transparent
-                        thickness:
-                            1, // Adjust the thickness (you can make it smaller)
-                        indent: 60, // Left padding (optional)
-                        endIndent: 60, // Right padding (optional)
-                      ),
-
-                      const SizedBox(
-                        height: 20,
-                      ),
-                      const Center(
-                        child: Column(
-                          children: [
-                            Text(
-                              'Contact Us',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.black87,
-                              ),
-                            ),
-                            SizedBox(
-                                height:
-                                    8), // Adjust the spacing between the lines
-                            Text(
-                              'Powered by Pioneer',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey,
-                                fontWeight: FontWeight.w300,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(
-                        height: 10,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ]),
-          Positioned(
-            top: screenHeight * (3 / 9) - 80 / 2,
-            left: 16,
-            right: 16,
-            child: Container(
-              height: 80,
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                mainAxisSize: MainAxisSize.max,
-                children: <Widget>[
-                  ProfileInfoCard(firstText: "IN", secondText: "00:00"),
-                  SizedBox(
-                    width: 10,
-                  ),
-                  ProfileInfoCard(firstText: "Status", secondText: "A"),
-                  SizedBox(
-                    width: 10,
-                  ),
-                  SizedBox(
-                    width: 10,
-                  ),
-                  ProfileInfoCard(firstText: "OUT", secondText: "00:00"),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );     */
   }
 }
 
@@ -630,12 +385,12 @@ class ItemDashboard extends StatelessWidget {
 class ProfileInfoCard extends StatelessWidget {
   final firstText, secondText, hasImage, imagePath;
 
-  const ProfileInfoCard({
-        super.key,
-        this.firstText,
-        this.secondText,
-        this.hasImage = false,
-        this.imagePath});
+  const ProfileInfoCard(
+      {super.key,
+      this.firstText,
+      this.secondText,
+      this.hasImage = false,
+      this.imagePath});
 
   @override
   Widget build(BuildContext context) {
@@ -663,7 +418,8 @@ class ProfileInfoCard extends StatelessWidget {
 class TwoLineItem extends StatelessWidget {
   final String firstText, secondText;
 
-  const TwoLineItem({super.key, required this.firstText, required this.secondText});
+  const TwoLineItem(
+      {super.key, required this.firstText, required this.secondText});
 
   @override
   Widget build(BuildContext context) {
@@ -696,7 +452,10 @@ class ProfileInfoBigCard extends StatelessWidget {
   final Widget icon;
 
   const ProfileInfoBigCard(
-      {super.key, required this.firstText, required this.secondText, required this.icon});
+      {super.key,
+      required this.firstText,
+      required this.secondText,
+      required this.icon});
 
   @override
   Widget build(BuildContext context) {

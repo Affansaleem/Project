@@ -5,8 +5,6 @@ import 'employeeData/employeeDash/mydrawerbuilding/employeeMain.dart';
 import 'introduction_screens/intro_screen.dart';
 
 class AppStartup extends StatelessWidget {
-
-
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<dynamic>(
@@ -27,11 +25,10 @@ class AppStartup extends StatelessWidget {
   }
 
   Future<dynamic> checkIfUserLoggedIn() async {
-
     SharedPreferences prefs = await SharedPreferences.getInstance();
 
-    var isLoggedIn = prefs.getBool('Login'); //it is that value that has been set
-
+    var isLoggedIn =
+        prefs.getBool('Login'); //it is that value that has been set
 
     return isLoggedIn;
   }
